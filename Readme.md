@@ -1,6 +1,7 @@
 ### Adblocking download and store filters task ###
 
 This module contains a luigi task that
+
 1. Download adblocking filters used by the adblocking module in the extension.
 1. Store these filters to an S3 bucket along with their corresponding md5 and urls, so that the extension imports these filters directly from S3.
 

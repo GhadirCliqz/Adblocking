@@ -13,8 +13,10 @@ This module contains a luigi task that
 
 ### Deploy for the very first time ###
 
-Deployment involves creating an autoscaling group and the instance.
+Deployment involves creating an autoscaling group and the instance based on Cliqz deployment.
 This section is for creating all of these for the first time.
+
+The default deployment is a single ec2 instance running luigi, with tasks triggered by cron.
 
 1. `fab launch_cluster` instances get launched
 1. `fab update` creates AMI out of each created instance, and creates one autoscaling group (and launch config) for each instance.

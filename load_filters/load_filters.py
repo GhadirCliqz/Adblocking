@@ -12,7 +12,8 @@ class StoreAdblockerFilters(luigi.Task):
 
     BASE_URL = 'https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/'
     FILTER_LIST_BASE_URL = 'https://raw.githubusercontent.com/gorhill/uBlock/master/'
-    S3_BUCKET = "s3://ghadir-adblocking/filters/"
+    S3_BUCKET = "s3://cdn.cliqz.com/adblocking/filters/"
+    S3_BUCKET_LATEST = "s3://cdn.cliqz.com/adblocking/latest-filters"
 
     date = luigi.DateParameter(default=datetime.datetime.now().date())
     client = S3Client(host='s3.amazonaws.com')
@@ -25,7 +26,8 @@ class StoreAdblockerFilters(luigi.Task):
         if not os.path.exists(newpath):
             os.makedirs(newpath)
         self.extract_filters_urls()
-        self.client.put('filters_urls.txt', self.S3_BUCKET+'/{0}/filters_urls'.format(self.date))
+        self.client.put('filters_urls.txt', self.S3_BUCKET+'/{0}/filters_urls'.format(self.date), policy='public-read')
+        self.copy_latest_bucket()
         # out_file = self.output().open('w')
         # out_file.write(open('filters_urls.txt', 'rb').read())
         # out_file.close()
@@ -75,7 +77,6 @@ class StoreAdblockerFilters(luigi.Task):
 
     def download_file(self, url):
         """download a file"""
-        print repr(url)
         filename = url.split('/')[-1]
         local_filename = os.path.join('files', filename)
         try:
@@ -85,7 +86,10 @@ class StoreAdblockerFilters(luigi.Task):
                 for chunk in request.iter_content(chunk_size=1024):
                     if chunk:
                         downloaded_file.write(chunk)
-            self.client.put(local_filename, self.S3_BUCKET+'/{1}/{0}'.format(filename, self.date))
+            url = url.replace("http://", "")
+            url = url.replace("https://", "")
+            print repr(url)
+            self.client.put(local_filename, self.S3_BUCKET+'/{1}/{0}'.format(url, self.date), policy='public-read')
             # S3_CLIENT.Object('ghadir-adblocking-filters', local_filename).put(Body=open(local_filename, 'rb'))
 
         except requests.exceptions.RequestException as request_exception:
@@ -104,6 +108,9 @@ class StoreAdblockerFilters(luigi.Task):
             return path.replace('assets/ublock/', self.BASE_URL + 'filters/')
         else:
             return None
+
+    def copy_latest_bucket(self):
+        self.client.copy(self.S3_BUCKET+'{0}'.format(self.date), self.S3_BUCKET_LATEST, preserve_acl=True)
 
 
 if __name__ == "__main__":

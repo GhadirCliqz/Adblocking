@@ -4,6 +4,7 @@ This module contains a luigi task that
 
 1. Download adblocking filters used by the adblocking module in the extension.
 1. Store these filters to an S3 bucket along with their corresponding md5 and urls, so that the extension imports these filters directly from S3.
+1. Copy the content of the latest bucket to cdn.cliqz.com bucket on the primary account.
 
 * In order to schedule the task on daily basis a cron task is triggered on the deployed instance.
 * The filters are downloaded daily, for each day a new bucket is created in S3.
@@ -13,7 +14,7 @@ This module contains a luigi task that
 
 ### Deploy for the very first time ###
 
-Deployment involves creating an autoscaling group and the instance based on Cliqz deployment.
+Deployment involves creating an autoscaling group and the instance based on Cliqz deployment (in primary account).
 This section is for creating all of these for the first time.
 
 The default deployment is a single ec2 instance running luigi, with tasks triggered by cron.
@@ -31,8 +32,8 @@ terminate the instances, and delete their corresponding volumes manually.
 
 ### Deploy new code to existing cluster ###
 
-1. Commit your code on the local repo, then `fab std.ec2.for_all deploy`
-1. Now we need to update the AMI snapshot so that new instances created by autoscaling would pick the latest code we just deployed: `fab std.autoscale.update_config_from_instance:[instance id with updated code]`
+1. Commit your code on the local repo, then `fab for_all deploy_app`
+1. Now we need to update the AMI snapshot so that new instances created by autoscaling would pick the latest code we just deployed: `fab update_config_from_instance:name of autoscaling group ex. Adblocking_load_filters_test-Adblocking_load_filters_test-c1-1,instance id with updated code ex. i-5f3c3f51`
 
 
 Done :)

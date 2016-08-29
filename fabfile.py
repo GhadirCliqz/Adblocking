@@ -2,8 +2,8 @@ import os
 from fabric.api import task, local, run, settings, execute, put
 import fabric.contrib as fcontrib
 import cliqz
-from cliqz_tasks.ec2 import launch_cluster, cluster_list_instances
-from cliqz_tasks.autoscale import update
+from cliqz_tasks.ec2 import launch_cluster, cluster_list_instances, for_all
+from cliqz_tasks.autoscale import update, update_config_from_instance
 
 app_name = 'Adblocking_load_filters_test'
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -38,15 +38,13 @@ def deploy_app():
     with settings(host_string='localhost'):
         local("tar cjf {} load_filters".format(pkg['local']))
     cliqz.package.install(pkg, '/opt/load_filters')
-
     add_crontab()
 
 @task
 def add_crontab():
     cliqz.cli.install_cronjob(
-        "0 6 * * * root cd /opt/load_filters/load_filters && PYTHONPATH='.' /usr/local/bin/luigi --module load_filters StoreAdblockerFilters",
-        "DailyLoadFilters"
-    )
+        "0 3 * * * root cd /opt/load_filters/load_filters && PYTHONPATH='.' /usr/local/bin/luigi --module load_filters StoreAdblockerFilters",
+        "DailyLoadFilters")
 
 # Setup
 cliqz.setup(
@@ -56,13 +54,10 @@ cliqz.setup(
     buckets=[],
     policies=[{
                 "Action": [
-                    "s3:GetObject",
-                    "s3:ListBucket",
-                    "s3:PutObject",
-                    "s3:PutObjectAcl"
+                    "*"
                 ],
                 "Resource": [
-                    "arn:aws:s3:::ghadir-adblocking*"
+                    "arn:aws:s3:::cdn.cliqz.com*"
                 ],
                 "Effect": "Allow"
             }],
